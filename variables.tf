@@ -1,5 +1,3 @@
-#parameters that coustermer needs to enter
-
 variable "prefix" {
   description = "A unique identifier for resources. Must begin with a lowercase letter and end with a lowerccase letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   type        = string
@@ -25,6 +23,12 @@ variable "region" {
   default     = ""
 }
 
+variable "zone" {
+  description = "zone where VPC will be created. ex:jp-tok-1,us-south-1"
+  type        = string
+  default     = ""
+}
+
 variable "powervs_zone" {
   description = "IBM Cloud data center location where IBM PowerVS infrastructure will be created."
   type        = string
@@ -35,6 +39,12 @@ variable "windows_ssh_publickey" {
   type        = string
   default     = ""
   description = "windows_ssh_publickey"
+}
+
+variable "squid_ssh_publickey" {
+  type        = string
+  default     = ""
+  description = "squid_ssh_publickey as a optional,If we provide the public for squid it is going to create Squid server,If not it will not create the squid"
 }
 
 variable "vtl_public_key" {
@@ -61,25 +71,7 @@ variable "linux_ssh_publickey" {
   description = "linux_ssh_publickey"
 }
 
-variable "vtl_index_volume_size" {
-  type        = number
-  default     = 20
-  description = "block-storage-volume maximum size of the volume in 2000GB, it will fail if we exceed the size"
-}
 
-variable "vtl_tape_volume_size" {
-  type        = number
-  default     = 20
-  description = "tape-storage-volume maximum size of the volume in 2000GB, it will fail if we exceed the size"
-}
-
-variable "vtl_configuration_volume_size" {
-  type        = number
-  default     =20
-  description = "configuration-storage-volume maximum size of the volume in 2000GB, it will fail if we exceed the size"
-}
-
-#optional variables- /Defaul variables
 
 variable "powervs_resource_group_name" {
   description = "Existing IBM Cloud resource group name."
@@ -99,7 +91,6 @@ variable "powervs_management_network" {
     cidr = "10.51.0.0/24"
   }
 }
-
 
 variable "powervs_backup_network" {
   description = "Name of the IBM Cloud PowerVS backup network and CIDR to create."
@@ -127,6 +118,27 @@ variable "cloud_connection" {
     metered        = true
   }
 }
+
+variable "vtl_index_volume_size" {
+  type        = number
+  default     = 20
+  description = "block-storage-volume maximum size of the volume in 2000GB, it will fail if we exceed the size"
+}
+
+variable "vtl_tape_volume_size" {
+  type        = number
+  default     = 20
+  description = "tape-storage-volume maximum size of the volume in 2000GB, it will fail if we exceed the size"
+}
+
+variable "vtl_configuration_volume_size" {
+  type        = number
+  default     =20
+  description = "configuration-storage-volume maximum size of the volume in 2000GB, it will fail if we exceed the size"
+}
+
+
+
 
 variable "vtl_memory" {
   type        = number
@@ -158,11 +170,7 @@ variable "vtl_storage_type" {
   description = "Type of storage tier to assign to the VTL instance based on required performance: 'tier1' or 'tier3'"
 }
 
-variable "vtl_licensed_repository_capacity" {
-  type        = number
-  default     = 1
-  description = "VTL licensed repository capacity in TB"
-}
+
 
 variable "vtl_public_network_name" {
   type        = string
@@ -183,33 +191,38 @@ variable "vtl_public_gateway" {
 }
 
 
-variable "vtl_placement_group" {
-  type        = string
-  default     = ""
-  description = "Server group name where the VTL instance will be placed, as defined for the selected Power Systems Virtual Server CRN"
-}
-variable "vtl_affinity_policy" {
-  type        = string
-  default     =  "anti-affinity"
-  description = "Storage anti-affinity policy to use for placemant of the VTL volume if PVM instance IDs are sepcified"
-}
-
-
 variable "powervs_image_names" {
   description = "List of Images to be imported into cloud account from catalog images."
   type        = list(string)
-  default = [ "RHEL8-SP6","7200-05-05","IBMi-72-09-2924-8" ]
+  default     = ["RHEL8-SP6","7200-05-05","IBMi-72-09-2924-8"]
+}
+
+
+variable "powervs_os_image_name1" {
+  description = "Image Name for PowerVS Instance"
+  type        = string
+  default     = "RHEL8-SP6"
+}
+variable "powervs_os_image_name2" {
+  description = "Image Name for PowerVS Instance"
+  type        = string
+  default     = "7200-05-05"
+}
+variable "powervs_os_image_name3" {
+  description = "Image Name for PowerVS Instance"
+  type        = string
+  default     = "IBMi-72-09-2924-8"
 }
 
 variable "IBMI_memory" {
   type        = number
-  default     = "2"
+  default     = 18
   description = "IBMI_memory"
 }
 
 variable "IBMI_processors" {
   type        = number
-  default     = "0.25"
+  default     = 2
   description = "IBMI_processors"
 }
 
@@ -242,13 +255,13 @@ variable "IBMI_storage_type" {
 
 variable "AIX_memory" {
   type        = number
-  default     = "2"
+  default     = 18
   description = "AIX_memory"
 }
 
 variable "AIX_processors" {
   type        = number
-  default     = "0.25"
+  default     = 2
   description = "AIX_processors"
 }
 
@@ -278,13 +291,13 @@ variable "AIX_storage_type" {
 
 variable "linux_memory" {
   type        = number
-  default     = "2"
+  default     = 18
   description = "linux_memory"
 }
 
 variable "linux_processors" {
   type        = number
-  default     = "0.25"
+  default     = 2
   description = "linux_processors"
 }
 
@@ -305,6 +318,18 @@ variable "linux_storage_type" {
   type        = string
   default     = "tier3"
   description = "Type of storage tier to assign to the VTL instance based on required performance: 'tier1' or 'tier3'"
+}
+
+variable "peer_cidrs" {
+  description = "CIDR's of the peer to connect to the gateway, it is required parameter as you provide the mode of VPN gateway"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "mode" {
+  description = "If you provide the MODE parameter it is going to create the VPN gateway otherwise it will not create "
+  type        = string
+  default     = ""
 }
 
 
